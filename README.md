@@ -14,14 +14,25 @@ with [opgp-service](https://www.npmjs.com/package/opgp-service)
 # <a name="example"></a> example
 ```ts
 import getCboxVault from 'cbox-vault'
-import { Observable } from 'rxjs'
-import getOpgpService, { OpgpKeyOpts } from 'opgp-service'
+import getOpgpService from 'opgp-service'
 const PouchDB = require('pouchdb-browser')
+const pbkdf2 = require('pbkdf2').pbkdf2
+const randombytes = require('randombytes')
 
 import debug = require('debug')
 debug.enable('example:*,cbox-vault:*,rx-pouchdb:*')
 
 const opgp = getOpgpService()
+
+// setup hash function for securely hashing _id values before storing to db
+const salt = randombytes(64)
+const hash = function (id: string): Promise<Uint8Array> {
+  return new Promise(function (resolve, reject) {
+    pbkdf2(id, salt, 4096, 24, function (err: any, hash: Uint8Array) {
+      if (err) { reject(err) } else { resolve(hash) }
+    })
+  })
+}
 
 const db = new PouchDB('sids')
 const key = opgp.generateKey('john.doe@example.com', {
@@ -35,6 +46,7 @@ const sids = getCboxVault(db, opgp, { // encrypt and sign with same key-pair
   cipher: key,
   auth: key
 }, {
+  hash: hash,
   read: { include_docs: true } // required for bulk read
 })
 
@@ -55,23 +67,33 @@ const docs = [{
   release: '1987'
 }]]
 
+function getId (doc: any): any {
+  return Array.isArray(doc) ? doc.map(getId) : { _id: doc._id }
+}
+
+const refs = docs.map(getId)
+
 // write docs to vault
-const ref$ = sids.write(docs)
+const write$ = sids.write(docs)
 .do(debug('example:write:'))
 
 // read docs from vault
-const doc$ = sids.read(ref$) // read all written docs
+const read$ = sids.read(refs)
 .do(debug('example:read:'))
 
-const rob$ = sids.read([{ // search Rob Hubbard tunes
+// search Rob Hubbard tunes
+const search$ = sids.read([{
   startkey: 'hubbard',
   endkey: 'hubbard\ufff0'
 }])
-.do(debug('example:search-rob'))
+.do(debug('example:search:'))
 
-doc$.concat(rob$)
-.forEach(nop)
-.catch(debug('example:error:'))
+write$.forEach(nop)
+.catch(debug('example:write:error:'))
+.then(() => read$.forEach(nop))
+.catch(debug('example:read:error:'))
+.then(() => search$.forEach(nop))
+.catch(debug('example:search:error:'))
 .then(() => db.destroy())
 .then(debug('example:destroy:done'))
 .catch(debug('example:destroy:error:'))

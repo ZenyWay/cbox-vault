@@ -11,8 +11,8 @@
     "example:debug": "concurrently --kill-others \"npm run example:bundle:watch\" \"npm run example:serve\"",
     "example:serve": "http-server -c-1 -i -e html -o -p 6510 spec/example",
     "preexample:bundle": "rimraf spec/example/*.js",
-    "example:bundle": "browserify spec/example/index.ts -p [ tsify -p spec/example ] --exclude rxjs --exclude opgp-service --exclude rx-pouchdb --exclude pouchdb-browser --exclude tslib --exclude debug -t uglifyify -o spec/example/index.js",
-    "example:bundle:watch": "watchify spec/example/index.ts -p [ tsify -p spec/example ] --exclude rxjs --exclude opgp-service --exclude rx-pouchdb --exclude pouchdb-browser --exclude tslib --exclude debug -o spec/example/index.js --debug -v",
+    "example:bundle": "browserify spec/example/index.ts -p [ tsify -p spec/example ] --exclude rxjs --exclude opgp-service --exclude rx-pouchdb --exclude pouchdb-browser --exclude randomshuffle --exclude base64-js --exclude pbkdf2 --exclude tslib --exclude debug -t aliasify -t uglifyify -o spec/example/index.js",
+    "example:bundle:watch": "watchify spec/example/index.ts -p [ tsify -p spec/example ] --exclude rxjs --exclude opgp-service --exclude rx-pouchdb --exclude pouchdb-browser --exclude randomshuffle --exclude base64-js --exclude pbkdf2 --exclude tslib --exclude debug -t aliasify -o spec/example/index.js --debug -v",
     "prepublish": "npm run dist",
     "pretest": "mkdirp spec/reports && rimraf spec/reports/*",
     "test": "karma start spec/karma.conf.js --single-run",
@@ -48,28 +48,28 @@
   "dependencies": {
     "@types/dot-prop": "0.0.30",
     "dot-prop": "^4.1.0",
-    "most": "^1.2.1",
-    "opgp-service": "^2.0.2",
+    "opgp-service": "^2.1.0",
     "randombins": "^1.0.0",
+    "randomshuffle": "^1.0.0",
     "rx-pouchdb": "^1.0.4",
     "rxjs": "^5.0.3"
   },
   "devDependencies": {
     "@types/debug": "0.0.29",
     "@types/jasmine": "^2.5.41",
-    "@types/node": "^7.0.0",
+    "@types/node": "^7.0.3",
+    "aliasify": "^2.1.0",
     "browserify": "^13.3.0",
     "browserify-istanbul": "^2.0.0",
     "concurrently": "^3.1.0",
     "coveralls": "^2.11.15",
     "cpx": "^1.5.0",
     "debug": "^2.6.0",
-    "eslint": "^3.13.1",
+    "eslint": "^3.14.0",
     "http-server": "^0.9.0",
-    "immutable": "^3.8.1",
     "istanbul": "^0.4.5",
     "jasmine-core": "^2.5.2",
-    "karma": "^1.3.0",
+    "karma": "^1.4.0",
     "karma-browserify": "^5.1.0",
     "karma-chrome-launcher": "^2.0.0",
     "karma-coverage": "^1.1.1",
@@ -80,6 +80,8 @@
     "karma-safari-launcher": "^1.0.0",
     "karma-spec-reporter": "0.0.26",
     "mkdirp": "^0.5.1",
+    "pbkdf2": "^3.0.9",
+    "randombytes": "^2.0.3",
     "remap-istanbul": "^0.8.4",
     "rimraf": "^2.5.4",
     "tsify": "^3.0.0",
@@ -87,5 +89,10 @@
     "typescript": "^2.1.5",
     "uglifyify": "^3.0.4",
     "watchify": "^3.8.0"
+  },
+  "aliasify": {
+    "aliases": {
+      "base64-js": "base64Js"
+    }
   }
 }
