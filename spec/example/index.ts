@@ -1,5 +1,5 @@
 /**
- * Copyright 2016 Stephane M. Catala
+ * Copyright 2017 Stephane M. Catala
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,16 +14,17 @@
 ;
 import getCboxVault from '../../src'
 import getOpgpService from 'opgp-service'
+import getRandomBinsFactory from 'randombins'
 const PouchDB = require('pouchdb-browser')
 const pbkdf2 = require('pbkdf2').pbkdf2
 const randombytes = require('randombytes')
 
 import debug = require('debug')
-debug.enable('example:*,cbox-vault:*,rx-pouchdb:*')
+debug.enable('example:*,cbox-vault:*,rx-pouchdb:*,id-encoder:*,shuffled-bins:*')
 
 const opgp = getOpgpService()
 
-// setup hash function for securely hashing _id values before storing to db
+// define hash function for securely hashing _id values before storing to db
 const salt = randombytes(64)
 const hash = function (id: string): Promise<Uint8Array> {
   return new Promise(function (resolve, reject) {
@@ -33,19 +34,24 @@ const hash = function (id: string): Promise<Uint8Array> {
   })
 }
 
-const db = new PouchDB('sids')
+// define random bins for more efficient startkey/endkey search
+const alphabet = '-abcdefghijklmnopqrstuvw_'
+const getRandomBins = getRandomBinsFactory({ size: 16})
+const bins = getRandomBins([ alphabet, alphabet ])
+.reduce((arr, bin) => arr.concat(bin), [])
+
 const key = opgp.generateKey('john.doe@example.com', {
   size: 2048,
   unlocked: true
 })
 
-key.then(debug('example:key:'))
-
+const db = new PouchDB('sids')
 const sids = getCboxVault(db, opgp, { // encrypt and sign with same key-pair
   cipher: key,
   auth: key
 }, {
   hash: hash,
+  bins: bins,
   read: { include_docs: true } // required for bulk read
 })
 
@@ -74,27 +80,22 @@ const refs = docs.map(getId)
 
 // write docs to vault
 const write$ = sids.write(docs)
-.do(debug('example:write:'))
 
 // read docs from vault
 const read$ = sids.read(refs)
-.do(debug('example:read:'))
 
 // search Rob Hubbard tunes
 const search$ = sids.read([{
-  startkey: 'hubbard',
-  endkey: 'hubbard\ufff0'
+  startkey: 'hubbard-',
+  endkey: 'hubbard-\uffff'
 }])
-.do(debug('example:search:'))
 
-write$.forEach(nop)
+write$.forEach(debug('example:write:'))
 .catch(debug('example:write:error:'))
-.then(() => read$.forEach(nop))
+.then(() => read$.forEach(debug('example:read:')))
 .catch(debug('example:read:error:'))
-.then(() => search$.forEach(nop))
+.then(() => search$.forEach(debug('example:search:')))
 .catch(debug('example:search:error:'))
 .then(() => db.destroy())
 .then(debug('example:destroy:done'))
 .catch(debug('example:destroy:error:'))
-
-function nop () {}
