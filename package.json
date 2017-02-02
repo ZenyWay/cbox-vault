@@ -46,7 +46,7 @@
   },
   "homepage": "https://github.com/zenyway/cbox-vault#readme",
   "dependencies": {
-    "bin-allocator": "^1.0.0",
+    "bin-allocator": "^1.0.1",
     "randomshuffle": "^1.0.0",
     "rx-pouchdb": "^1.1.0",
     "rxjs": "^5.1.0"

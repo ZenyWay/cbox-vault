@@ -102,6 +102,13 @@ write$.forEach(debug('example:write:'))
 .then(debug('example:destroy:done'))
 .catch(debug('example:destroy:error:'))
 ```
+a live version of this example can be viewed [here](https://cdn.rawgit.com/ZenyWay/cbox-vault/v1.0.0/spec/example/index.html)
+in the browser console,
+or by cloning this repository and running the following commands from a terminal:
+```bash
+npm install
+npm run example
+```
 the files of this example are available [here](./spec/example).
 
 # <a name="api"></a> API v1.0 stable
