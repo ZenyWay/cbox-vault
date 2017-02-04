@@ -12,10 +12,9 @@
  * Limitations under the License.
  */
 ;
-import { VersionedDoc, RevStatusDoc, RevStatus, OneOrMore } from './core-vault'
+import { OneOrMore } from './core-vault'
+import { VersionedDoc, DocRevStatus } from 'rx-pouchdb'
 import { __assign as assign } from 'tslib'
-
-export interface RevStatusBoxDoc extends DocBox, RevStatus {}
 
 /**
  * stringified doc wrapped in a corresponding VersionedDoc
@@ -30,7 +29,7 @@ export function box <D extends VersionedDoc>(doc: OneOrMore<D>, id?: string): On
   : boxDoc(doc)
 }
 
-export function unbox <D extends VersionedDoc>(box: OneOrMore<DocBox>|RevStatusBoxDoc): OneOrMore<D>|RevStatusDoc {
+export function unbox <D extends VersionedDoc>(box: OneOrMore<DocBox>|DocBox&DocRevStatus): OneOrMore<D>|D&DocRevStatus {
   return Array.isArray(box)
   ? box.map(b => unboxDocBox<D>(b))  // ignore index argument from map
   : unboxDocBox<D>(box)
@@ -47,8 +46,8 @@ function boxDoc <D extends VersionedDoc>(doc: D, id?: string): DocBox {
   return box
 }
 
-function unboxDocBox <D extends VersionedDoc|RevStatusDoc>
-(box: DocBox|RevStatusBoxDoc): D {
+function unboxDocBox <D extends VersionedDoc>
+(box: DocBox|DocBox&DocRevStatus): D|D&DocRevStatus {
   const doc = assign({}, box) // VersionedDoc & DocRevStatus
   delete doc.content
   assign(doc, <D>JSON.parse(box.content)) // shallow copy ok

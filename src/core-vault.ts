@@ -12,9 +12,12 @@
  * Limitations under the License.
  */
 ;
-import { DocBox, RevStatusBoxDoc } from './doc-box'
+import { DocBox } from './doc-box'
 import { isUndefined } from './utils'
-import newRxPouchDb, { RxPouchDb } from 'rx-pouchdb'
+import newRxPouchDb, {
+  RxPouchDb,
+  DocRevStatus, VersionedDoc, DocRef, DocRevs, DocIdRange, DocId, ReadOpts
+} from 'rx-pouchdb'
 import { Observable } from 'rxjs'
 import { OpgpService, OpgpProxyKey, KeyRefMap } from 'opgp-service'
 import { __assign as assign } from 'tslib'
@@ -128,7 +131,7 @@ export interface CoreVault {
    * @memberOf CboxVault
    */
   read (ref$: Observable<OneOrMore<DocRef>|DocRevs|DocIdRange>, opts?: ReadOpts):
-  Observable<OneOrMore<DocBox>|RevStatusBoxDoc>
+  Observable<OneOrMore<DocBox>|DocBox&DocRevStatus>
 
   /**
    * @param {OpgpProxyKey} key unlocked
@@ -153,114 +156,6 @@ export interface RevStatus {
   _conflicts?: any, // TODO define _conflicts interface
 }
 
-export interface VersionedDoc extends DocRef {
-  _deleted?: boolean
-}
-
-/**
- * @public
- * @interface {DocRef}
- * a unique identifier (reference) of a specific version of a JSON document.
- * @see (JSON Document field description)[http://wiki.apache.org/couchdb/HTTP_Document_API#Special_Fields]
- */
-export interface DocRef extends DocId {
-  /**
-   * @public
-   * @prop {string} _rev? unique document revision identification string.
-   * default: latest revision of document
-   */
-  _rev?: string
-}
-
-/**
- * @public
- * @interface {DocRevs}
- * a set of unique references to an array of versions of a JSON document.
- * @see (JSON Document field description)[http://wiki.apache.org/couchdb/HTTP_Document_API#Special_Fields]
- */
-export interface DocRevs extends DocId {
-  /**
-   * @public
-   * @prop {string[]} _revs list of document revision identification strings.
-   * an empty array represents all document revisions.
-   */
-  _revs: string[]
-}
-
-/**
- * @public
- * @interface {DocId}
- * a unique identifier (reference) of a JSON document.
- * on its own, identifies the latest version of that document.
- * @see (JSON Document field description)[http://wiki.apache.org/couchdb/HTTP_Document_API#Special_Fields]
- */
-export interface DocId {
-  /**
-   * @public
-   * @prop {string} _id unique document identification string.
-   */
-  _id: string
-}
-
-/**
- * @public
- * @interface {DocIdRange}
- * a specification of a range of {DocRef#_id} document identifiers.
- * @see [pouhDB#allDocs](https://pouchdb.com/api.html#batch_fetch) options
- */
-export interface DocIdRange {
-  /**
-   * @public
-   * @prop {string} startkey
-   * the start of the range of {DocRef#_id} document identifiers.
-   * @see [pouhDB#allDocs](https://pouchdb.com/api.html#batch_fetch) options
-   */
-  startkey: string,
-  /**
-   * @public
-   * @prop {string} endkey
-   * the end of the range of {DocRef#_id} document identifiers.
-   * @see [pouhDB#allDocs](https://pouchdb.com/api.html#batch_fetch) options
-   */
-  endkey: string,
-  /**
-   * @public
-   * @prop {boolean} descending
-   * reverse the order of the range of {DocRef#_id} document identifiers.
-   * when `true`, the order of {DocIdRange#startkey} and {DocIdRange#endkey}
-   * is reversed.
-   * default: `false`.
-   * @see [pouhDB#allDocs](https://pouchdb.com/api.html#batch_fetch) options
-   */
-  descending?: boolean,
-  /**
-   * @public
-   * @prop {boolean} inclusive_end
-   * when `true`, include documents with a {DocRef#_id} equal to
-   * the given {DocIdRange#endkey}.
-   * default: `true`.
-   * @see [pouhDB#allDocs](https://pouchdb.com/api.html#batch_fetch) options
-   */
-  inclusive_end?: boolean
-}
-
-/**
- * @public
- * @interface {ReadOpts}
- */
-export interface ReadOpts {
-  /**
-   * @public
-   * @prop {boolean} binary
-   * when `true`, retrieve the requested documents,
-   * instead of only their {DocRef} references.
-   * ignored and forced to `true` when fetching a single document.
-   * default: `false` for retrieving only {DocRef} references
-   * @see [PouchDb#allDocs](https://pouchdb.com/api.html#batch_fetch) options
-   */
-  include_docs?: boolean
-}
-
 /**
  * wrapper that unwraps all Eventual<OpgpProxyKey> instances for core vault
  */
@@ -279,7 +174,7 @@ class CoreVaultWrapperClass implements CoreVault {
   }
 
   read (ref$: Observable<OneOrMore<DocRef>|DocRevs|DocIdRange>, opts?: ReadOpts):
-  Observable<OneOrMore<DocBox|RevStatusBoxDoc>> {
+  Observable<OneOrMore<DocBox|DocBox&DocRevStatus>> {
     return this.vault$.flatMap(vault => vault.read(ref$, opts))
   }
 
@@ -327,8 +222,8 @@ class CoreVaultClass {
   }
 
   read (ref$: Observable<OneOrMore<DocRef>|DocRevs|DocIdRange>, opts?: ReadOpts):
-  Observable<OneOrMore<DocBox>|RevStatusBoxDoc> {
-    const cipher$: Observable<OneOrMore<DocBox>|RevStatusBoxDoc> =
+  Observable<OneOrMore<DocBox>|DocBox&DocRevStatus> {
+    const cipher$: Observable<OneOrMore<DocBox>|DocBox&DocRevStatus> =
     this.rxdb.read(ref$)
 
     return cipher$.flatMap(doc => this.decrypt(doc))

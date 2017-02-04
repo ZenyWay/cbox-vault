@@ -12,12 +12,10 @@
  * Limitations under the License.
  */
 ;
-import getCoreVault, {
-  Eventual, OneOrMore,
-  DocId, DocRef, DocRevs, DocIdRange, VersionedDoc, RevStatusDoc
-} from './core-vault'
+import getCoreVault, { Eventual, OneOrMore } from './core-vault'
 import getEncoder, { IdEncoder } from './id-encoder'
 import { isString, isFunction } from './utils'
+import { DocId, DocRef, DocRevs, DocIdRange, VersionedDoc, DocRevStatus } from 'rx-pouchdb'
 import { Observable } from 'rxjs'
 
 export interface ReadRequestFactoryBuilder {
@@ -39,7 +37,7 @@ export interface ReadRequestSpec {
 export interface ReadRequest {
   key: string
   value: OneOrMore<DocRef>|DocRevs|DocIdRange
-  mapResponse (docs: OneOrMore<VersionedDoc>|RevStatusDoc): OneOrMore<VersionedDoc>|RevStatusDoc
+  mapResponse <D extends VersionedDoc>(docs: OneOrMore<D>|D&DocRevStatus): OneOrMore<D>|DocRevStatus
 }
 
 abstract class ReadRequestClass implements ReadRequest {
@@ -55,7 +53,7 @@ abstract class ReadRequestClass implements ReadRequest {
     }
   }
 
-  mapResponse (docs: OneOrMore<VersionedDoc>|RevStatusDoc): OneOrMore<VersionedDoc>|RevStatusDoc {
+  mapResponse <D extends VersionedDoc>(docs: OneOrMore<D>|D&DocRevStatus): OneOrMore<D>|DocRevStatus {
     return docs
   }
 
@@ -79,7 +77,7 @@ class DocIdRangeReadRequestClass extends ReadRequestClass implements ReadRequest
     .concatMap(reqs => Observable.from(reqs))
   }
 
-  mapResponse (docs: VersionedDoc[]): OneOrMore<VersionedDoc>|RevStatusDoc {
+  mapResponse <D extends VersionedDoc>(docs: D[]): OneOrMore<D> {
     return docs.filter(isWithinRange(this.range)).sort(compareDocIds)
   }
 

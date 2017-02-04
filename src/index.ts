@@ -13,13 +13,15 @@
  */
 ;
 import getCoreVault, {
-  Eventual, OneOrMore, CoreVault, CoreVaultSpec, KeyRing,
-  RevStatusDoc, RevStatus, VersionedDoc, DocRef, DocRevs, DocIdRange, DocId, ReadOpts
+  Eventual, OneOrMore, CoreVault, CoreVaultSpec, KeyRing
 } from './core-vault'
+import {
+  DocRevStatus, VersionedDoc, DocRef, DocRevs, DocIdRange, DocId, ReadOpts
+} from 'rx-pouchdb'
 import getReadRequestFactory, { ReadRequestFactory } from './read-request'
 import getEncoder, { IdEncoder } from './id-encoder'
 import getShuffledBins from './shuffled-bins'
-import { DocBox, RevStatusBoxDoc, box, unbox } from './doc-box'
+import { DocBox, box, unbox } from './doc-box'
 import { OpgpService } from 'opgp-service'
 import { Observable } from 'rxjs'
 import { __assign as assign } from 'tslib'
@@ -29,7 +31,7 @@ export type Streamable<T> = Observable<T>|PromiseLike<T>|ArrayLike<T>
 
 export {
   Eventual, OneOrMore, KeyRing,
-  RevStatusDoc, RevStatus, VersionedDoc, DocRef, DocRevs, DocIdRange, DocId, ReadOpts
+  DocRevStatus, VersionedDoc, DocRef, DocRevs, DocIdRange, DocId, ReadOpts
 }
 
 /**
@@ -166,8 +168,9 @@ export interface CboxVault {
    *
    * @memberOf CboxVault
    */
-  read <D extends RevStatusDoc|VersionedDoc>
-  (refs: Streamable<OneOrMore<DocRef>|DocRevs|DocIdRange>, opts?: ReadOpts): Observable<OneOrMore<D>>
+  read <D extends VersionedDoc>
+  (refs: Streamable<OneOrMore<DocRef>|DocRevs|DocIdRange>, opts?: ReadOpts):
+  Observable<OneOrMore<D>|D&DocRevStatus>
 
   /**
    * @param {OpgpProxyKey|Promise<OpgpProxyKey>} key unlocked
@@ -184,6 +187,7 @@ class CboxVaultClass implements CboxVault {
   function (db: any, opgp: OpgpService, keys: KeyRing, opts?: Partial<CboxVaultSpec>): CboxVault {
     const vault = getCoreVault(db, opgp, keys, { read: opts && opts.read })
     const encoder = opts && getEncoder(opts.hash, {
+      // TODO: change encoder opts to accept string[]|BinAllocator<string> instead of shuffledbins
       shuffledbins: Promise.resolve(opts && opts.bins).then(bins => getShuffledBins(bins))
     })
     const getReadRequest$ = getReadRequestFactory(encoder)
@@ -206,8 +210,9 @@ class CboxVaultClass implements CboxVault {
     .share()
   }
 
-  read <D extends RevStatusDoc|VersionedDoc>
-  (refs: Streamable<OneOrMore<DocRef>|DocRevs|DocIdRange>, opts?: ReadOpts): Observable<OneOrMore<D>> {
+  read <D extends VersionedDoc>
+  (refs: Streamable<OneOrMore<DocRef>|DocRevs|DocIdRange>, opts?: ReadOpts):
+  Observable<OneOrMore<D>|D&DocRevStatus> {
     const ref$: Observable<OneOrMore<DocRef>|DocRevs|DocIdRange> = Observable.from(refs)
     .do(debug('cbox-vault:read:'))
     .share() // hot observable that waits for first subscription
@@ -234,7 +239,8 @@ class CboxVaultClass implements CboxVault {
   ) {}
 }
 
-function concat (acc: VersionedDoc[], val: OneOrMore<VersionedDoc>|RevStatusDoc): OneOrMore<VersionedDoc>|RevStatusDoc {
+function concat <D extends VersionedDoc>(acc: D[], val: OneOrMore<D>|D&DocRevStatus):
+OneOrMore<VersionedDoc>|VersionedDoc&DocRevStatus {
   return !acc || !acc.length ? val : acc.concat(val)
 }
 

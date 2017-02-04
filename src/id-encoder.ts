@@ -12,7 +12,8 @@
  * Limitations under the License.
  */
 ;
-import { Eventual, OneOrMore, DocId, DocIdRange } from './core-vault'
+import { Eventual, OneOrMore } from './core-vault'
+import { DocId, DocIdRange } from 'rx-pouchdb'
 import { ShuffledBinArray } from './shuffled-bins'
 import { isString, isFunction } from './utils'
 import * as base64 from 'base64-js'
