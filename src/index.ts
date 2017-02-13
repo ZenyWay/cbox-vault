@@ -24,10 +24,11 @@ import getShuffledBins from './shuffled-bins'
 import { DocBox, box, unbox } from './doc-box'
 import { OpgpService } from 'opgp-service'
 import { Observable } from 'rxjs'
+import { Subscribable } from 'rxjs/Observable'
 import { __assign as assign } from 'tslib'
 import * as debug from 'debug'
 
-export type Streamable<T> = Observable<T>|PromiseLike<T>|ArrayLike<T>
+export type Streamable<T> = Subscribable<T>|PromiseLike<T>|ArrayLike<T>
 
 export {
   Eventual, OneOrMore, KeyRing,
@@ -112,6 +113,8 @@ export interface CboxVault {
    *
    * @memberOf CboxVault
    */
+  write <D extends VersionedDoc> (docs: Streamable<D>): Observable<D>
+  write <D extends VersionedDoc> (docs: Streamable<D[]>): Observable<D[]>
   write <D extends VersionedDoc>
   (docs: Streamable<OneOrMore<D>>): Observable<OneOrMore<D>>
 
@@ -168,6 +171,14 @@ export interface CboxVault {
    *
    * @memberOf CboxVault
    */
+  read <D extends VersionedDoc> (refs: Streamable<DocRef>, opts?: ReadOpts):
+  Observable<D>
+  read <D extends VersionedDoc> (refs: Streamable<DocRef[]>, opts?: ReadOpts):
+  Observable<D[]>
+  read <D extends VersionedDoc> (refs: Streamable<DocIdRange>, opts?: ReadOpts):
+  Observable<D[]>
+  read <D extends VersionedDoc> (refs: Streamable<DocRevs>, opts?: ReadOpts):
+  Observable<D&DocRevStatus>
   read <D extends VersionedDoc>
   (refs: Streamable<OneOrMore<DocRef>|DocRevs|DocIdRange>, opts?: ReadOpts):
   Observable<OneOrMore<D>|D&DocRevStatus>
@@ -195,8 +206,7 @@ class CboxVaultClass implements CboxVault {
     return new CboxVaultClass(vault, encoder, getReadRequest$)
   }
 
-  write <D extends VersionedDoc>
-  (docs: Streamable<OneOrMore<D>>): Observable<OneOrMore<D>> {
+  write <D extends VersionedDoc> (docs: Streamable<OneOrMore<D>>) {
     const doc$ = Observable.from(docs)
     .do<OneOrMore<D>>(debug('cbox-vault:write:'))
     .share() // hot observable that waits for first subscription
@@ -211,8 +221,7 @@ class CboxVaultClass implements CboxVault {
   }
 
   read <D extends VersionedDoc>
-  (refs: Streamable<OneOrMore<DocRef>|DocRevs|DocIdRange>, opts?: ReadOpts):
-  Observable<OneOrMore<D>|D&DocRevStatus> {
+  (refs: Streamable<OneOrMore<DocRef>|DocRevs|DocIdRange>, opts?: ReadOpts) {
     const ref$: Observable<OneOrMore<DocRef>|DocRevs|DocIdRange> = Observable.from(refs)
     .do(debug('cbox-vault:read:'))
     .share() // hot observable that waits for first subscription

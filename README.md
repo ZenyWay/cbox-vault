@@ -14,7 +14,7 @@ with [opgp-service](https://www.npmjs.com/package/opgp-service).
 
 # <a name="example"></a> example
 ```ts
-import getCboxVault from 'cbox-vault'
+import getCboxVault, { DocId, VersionedDoc } from 'cbox-vault'
 import getOpgpService from 'opgp-service'
 import getRandomBinsFactory from 'randombins'
 const PouchDB = require('pouchdb-browser')
@@ -74,8 +74,9 @@ const docs = [{
   release: '1987'
 }]]
 
-function getId (doc: any): any {
-  return Array.isArray(doc) ? doc.map(getId) : { _id: doc._id }
+function getId <D extends VersionedDoc>(doc: D): DocId
+function getId <D extends VersionedDoc>(doc: D[]|D) {
+  return Array.isArray(doc) ? doc.map(getId) : <DocId>{ _id: doc._id }
 }
 
 const refs = docs.map(getId)
@@ -102,14 +103,13 @@ write$.forEach(debug('example:write:'))
 .then(debug('example:destroy:done'))
 .catch(debug('example:destroy:error:'))
 ```
-a live version of this example can be viewed [here](https://cdn.rawgit.com/ZenyWay/cbox-vault/v1.0.0/spec/example/index.html)
-in the browser console,
+view [a live version of this example in the browser console](https://cdn.rawgit.com/ZenyWay/cbox-vault/v1.0.2/spec/example/index.html),
 or by cloning this repository and running the following commands from a terminal:
 ```bash
 npm install
 npm run example
 ```
-the files of this example are available [here](./spec/example).
+the files of this example are available [in this repository](./spec/example).
 
 # <a name="api"></a> API v1.0 stable
 `ES5` and [`Typescript`](http://www.typescriptlang.org/) compatible.

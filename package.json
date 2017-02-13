@@ -1,6 +1,6 @@
 {
   "name": "cbox-vault",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "pouchdb-based vault that encrypts/decrypts docs to/from the underlying db",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -58,6 +58,7 @@
     "aliasify": "^2.1.0",
     "browserify": "^14.0.0",
     "browserify-istanbul": "^2.0.0",
+    "browserify-licenses": "^1.4.3",
     "concurrently": "^3.1.0",
     "coveralls": "^2.11.15",
     "cpx": "^1.5.0",

@@ -12,7 +12,7 @@
  * Limitations under the License.
  */
 ;
-import getCboxVault from '../../src'
+import getCboxVault, { DocId, VersionedDoc } from '../../src'
 import getOpgpService from 'opgp-service'
 import getRandomBinsFactory from 'randombins'
 const PouchDB = require('pouchdb-browser')
@@ -72,8 +72,9 @@ const docs = [{
   release: '1987'
 }]]
 
-function getId (doc: any): any {
-  return Array.isArray(doc) ? doc.map(getId) : { _id: doc._id }
+function getId <D extends VersionedDoc>(doc: D): DocId
+function getId <D extends VersionedDoc>(doc: D[]|D) {
+  return Array.isArray(doc) ? doc.map(getId) : <DocId>{ _id: doc._id }
 }
 
 const refs = docs.map(getId)
