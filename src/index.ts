@@ -63,25 +63,6 @@ export interface CboxVaultSpec extends CoreVaultSpec {
    * list of string bin delimitors
    */
   bins: Eventual<string[]>
-  /**
-   * restrict access to specifically listed properties
-   * with a defined passphrase.
-   * TODO implement support for `CboxVaultSpec.restrict`
-   */
-  restrict: VaultRestrictSpec
-}
-
-export interface VaultRestrictSpec {
-  /**
-   * hash of passphrase (SHA256) required
-   * for unlocking restricted properties.
-   */
-  hash: string
-  /**
-   * restrict list of restricted properties,
-   * in [dot-prop](https://www.npmjs.com/package/dot-prop) syntax.
-   */
-  props: string[]
 }
 
 export interface CboxVault {
