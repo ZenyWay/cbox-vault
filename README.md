@@ -103,7 +103,7 @@ write$.forEach(debug('example:write:'))
 .then(debug('example:destroy:done'))
 .catch(debug('example:destroy:error:'))
 ```
-view [a live version of this example in the browser console](https://cdn.rawgit.com/ZenyWay/cbox-vault/v1.0.2/spec/example/index.html),
+view [a live version of this example in the browser console](https://cdn.rawgit.com/ZenyWay/cbox-vault/v1.1.0/spec/example/index.html),
 or by cloning this repository and running the following commands from a terminal:
 ```bash
 npm install

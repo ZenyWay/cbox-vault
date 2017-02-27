@@ -1,6 +1,6 @@
 {
   "name": "cbox-vault",
-  "version": "1.0.3",
+  "version": "1.1.0",
   "description": "pouchdb-based vault that encrypts/decrypts docs to/from the underlying db",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

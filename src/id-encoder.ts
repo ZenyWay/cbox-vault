@@ -20,7 +20,7 @@ import * as base64 from 'base64-js'
 import { __assign as assign } from 'tslib'
 
 export interface IdEncoderFactory {
-  (hash?: (id: string) => Eventual<Uint8Array>, opts?: Partial<IdEncoderSpec>): IdEncoder
+  (hash?: (id: string) => Eventual<Uint8Array|string>, opts?: Partial<IdEncoderSpec>): IdEncoder
 }
 
 export interface IdEncoderSpec {
@@ -52,7 +52,7 @@ class PassThroughEncoder implements IdEncoder {
 
 class IdEncoderWrapperClass implements IdEncoder {
   static getInstance: IdEncoderFactory =
-  function (hash?: (id: string) => Eventual<Uint8Array>, opts?: Partial<IdEncoderSpec>): IdEncoder {
+  function (hash?: (id: string) => Eventual<Uint8Array|string>, opts?: Partial<IdEncoderSpec>): IdEncoder {
     if (!isFunction(hash)) { return new PassThroughEncoder() }
 
     const encoder = Promise.resolve(opts && opts.shuffledbins)
@@ -83,7 +83,7 @@ function encode <D extends DocId>(encoder: UnitIdEncoder, doc: OneOrMore<D>): Pr
 }
 
 class IdEncoderClass implements UnitIdEncoder {
-  static getInstance (hash: (id: string) => Eventual<Uint8Array>, shuffledbins?: ShuffledBinArray): IdEncoder {
+  static getInstance (hash: (id: string) => Eventual<Uint8Array|string>, shuffledbins?: ShuffledBinArray): IdEncoder {
     return new IdEncoderClass(hash)
   }
 
@@ -97,11 +97,11 @@ class IdEncoderClass implements UnitIdEncoder {
 
   encode <D extends DocId>(doc: D): Promise<D> {
     return Promise.resolve(this.hash(doc._id))
-    .then(hash => setDocId(doc, this.getPrefix() + base64.fromByteArray(hash)))
+    .then(hash => setDocId(doc, this.getPrefix() + (isString(hash) ? hash : base64.fromByteArray(hash))))
   }
 
   protected constructor (
-    protected hash: (id: string) => Eventual<Uint8Array>
+    protected hash: (id: string) => Eventual<Uint8Array|string>
   ) {}
 
   protected getPrefix (key?: string): string {
@@ -110,7 +110,7 @@ class IdEncoderClass implements UnitIdEncoder {
 }
 
 class SemiHomomorphicIdEncoderClass extends IdEncoderClass implements UnitIdEncoder {
-  static getInstance (hash: (id: string) => Eventual<Uint8Array>, shuffledbins: ShuffledBinArray): IdEncoder {
+  static getInstance (hash: (id: string) => Eventual<Uint8Array|string>, shuffledbins: ShuffledBinArray): IdEncoder {
     return new SemiHomomorphicIdEncoderClass(hash, shuffledbins)
   }
 
@@ -142,7 +142,7 @@ class SemiHomomorphicIdEncoderClass extends IdEncoderClass implements UnitIdEnco
   }
 
   private constructor (
-    hash: (id: string) => Eventual<Uint8Array>,
+    hash: (id: string) => Eventual<Uint8Array|string>,
     private shuffledbins: ShuffledBinArray,
   ) {
     super(hash)
