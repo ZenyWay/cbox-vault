@@ -58,7 +58,7 @@ export interface CboxVaultSpec extends CoreVaultSpec {
    * e.g. id => pbkdf2(id, salt, iterations, length, 'sha512').
    * `_id` fields are not encoded if this function is not defined.
    */
-  hash (id: string): Eventual<Uint8Array>
+  hash (id: string): Eventual<Uint8Array|string>
   /**
    * list of string bin delimitors
    */
