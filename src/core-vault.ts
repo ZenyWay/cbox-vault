@@ -223,7 +223,7 @@ class CoreVaultClass {
 
   read (ref$: Observable<OneOrMore<DocRef>|DocRevs|DocIdRange>, opts?: ReadOpts):
   Observable<OneOrMore<DocBox>|DocBox&DocRevStatus> {
-    const cipher$: Observable<OneOrMore<DocBox>|DocBox&DocRevStatus> =
+    const cipher$ = <Observable<OneOrMore<DocBox>|DocBox&DocRevStatus>>
     this.rxdb.read(ref$)
 
     return cipher$.flatMap(doc => this.decrypt(doc))
